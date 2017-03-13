@@ -12,28 +12,28 @@
 ## ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 ## OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-__precompile__(true)
+abstract CovarianceModel
 
-module GeoStats
-
-using Combinatorics: combinations
-
-include("covmodels.jl")
-include("kriging.jl")
-include("utils.jl")
-
-export
-  # covariance models
-  GaussianCovariance,
-  SphericalCovariance,
-  ExponentialCovariance,
-
-  # estimators
-  SimpleKriging,
-  OrdinaryKriging,
-  UniversalKriging,
-
-  # functions
-  estimate
-
+immutable GaussianCovariance{T<:Real} <: CovarianceModel
+  nugget::T
+  sill::T
+  range::T
 end
+GaussianCovariance() = GaussianCovariance(0.,1.,1.)
+(c::GaussianCovariance)(h) = (c.sill - c.nugget) * exp(-(h/c.range).^2)
+
+immutable SphericalCovariance{T<:Real} <: CovarianceModel
+  nugget::T
+  sill::T
+  range::T
+end
+SphericalCovariance() = SphericalCovariance(0.,1.,1.)
+(c::SphericalCovariance)(h) = (h .≤ c.range) .* (c.sill - c.nugget) .* (1 - 1.5h/c.range + 0.5(h/c.range).^3)
+
+immutable ExponentialCovariance{T<:Real} <: CovarianceModel
+  nugget::T
+  sill::T
+  range::T
+end
+ExponentialCovariance() = ExponentialCovariance(0.,1.,1.)
+(c::ExponentialCovariance)(h) = (c.sill - c.nugget) * exp(-(h/c.range))
